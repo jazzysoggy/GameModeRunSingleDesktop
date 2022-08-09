@@ -4,12 +4,11 @@
 
 
 
+
 #include "windows.h"
 #include "stdlib.h"
-#include "ddraw.h"
-#include "iostream"
 
-#define DDERR_EXCLUSIVEMODEALREADYSET           MAKE_DDHRESULT( 581 )
+#include "iostream"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -25,14 +24,16 @@ int main()
 	// TODO: code your application's behavior here.
 	while (true)
 	{
-		_sleep(1000);
+		Sleep(1000);
 
-		LPDIRECTDRAW7 DD;
-		HRESULT result = DD->TestCooperativeLevel();
+		QUERY_USER_NOTIFICATION_STATE result;
 
-		if (result == DDERR_EXCLUSIVEMODEALREADYSET)
+		QUERY_USER_NOTIFICATION_STATE* ptr = &result;
+		SHQueryUserNotificationState(ptr);
+		std::cout << result;
+		if (result == QUNS_RUNNING_D3D_FULL_SCREEN || result == QUNS_BUSY)
 		{
-			std::cout << "Works";
+			SendMessage(handle, WM_SYSCOMMAND, SC_MONITORPOWER, 2);
 		}
 		else
 		{
