@@ -7,14 +7,44 @@
 
 #include "windows.h"
 #include "stdlib.h"
-#include <lowlevelmonitorconfigurationapi.h>
 #include "iostream"
 #include "vector"
+#include "winreg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
+LSTATUS ReadRegistry(HKEY hKeyParent, LPCWSTR spath, LPCWSTR subkey, DWORD* readData)
+{
+	HKEY hKey;
+	LSTATUS nResult = ::RegOpenKeyEx(
+		hKeyParent,
+		spath,
+		0,
+		KEY_READ,
+		&hKey
+	);
+
+	if (nResult == ERROR_SUCCESS)
+	{
+
+		DWORD data;
+		DWORD len = sizeof(DWORD);//size of data
+		nResult = ::RegQueryValueEx(
+			hKey,
+			subkey,
+			NULL,
+			NULL,
+			(LPBYTE)(&data),
+			&len
+		);
+		RegCloseKey(hKey);
+		(*readData) = data;
+	}
+
+	return (nResult);
+}
 
 int main()
 {
@@ -23,27 +53,41 @@ int main()
 	QUERY_USER_NOTIFICATION_STATE result;
 	QUERY_USER_NOTIFICATION_STATE* ptr = &result;
 	SHQueryUserNotificationState(ptr);
-	QUERY_USER_NOTIFICATION_STATE lastResult = result;
+	bool currentState = false;
+	bool lastState = false;
 	// TODO: code your application's behavior here.
 	while (true)
 	{
 		Sleep(1000);
 
-		QUERY_USER_NOTIFICATION_STATE* ptr = &result;
-		SHQueryUserNotificationState(ptr);
+		const int BUFFER_SIZE = 1024;
 
-		if (result != lastResult)
+		DWORD nBufferSize;
+
+		LSTATUS nResult = ReadRegistry(HKEY_CURRENT_USER, L"Software\\Valve\\Steam", L"RunningAppID", &nBufferSize);
+
+		std::cout << (nBufferSize);
+		if (result == QUNS_RUNNING_D3D_FULL_SCREEN || nBufferSize != 0)
 		{
-			if (result == QUNS_RUNNING_D3D_FULL_SCREEN || result == QUNS_BUSY)
+			currentState = true;
+		}
+		else
+		{
+			currentState = false;
+		}
+
+		if (currentState != lastState)
+		{
+			if (currentState == true)
 			{
-				system("DisplaySwitch.exe /internal");
+				system("C:\\Windows\\System32\\DisplaySwitch.exe /internal");
 			}
 			else
 			{
-				system("DisplaySwitch.exe /extend");
+				system("C:\\Windows\\System32\\DisplaySwitch.exe /extend");
 			}
 		}
 
-		lastResult = result;
+		lastState = currentState;
 	}
 }
