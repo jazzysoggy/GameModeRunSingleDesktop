@@ -66,7 +66,7 @@ int main()
 
 		LSTATUS nResult = ReadRegistry(HKEY_CURRENT_USER, L"Software\\Valve\\Steam", L"RunningAppID", &nBufferSize);
 
-		std::cout << (nBufferSize);
+
 		if (result == QUNS_RUNNING_D3D_FULL_SCREEN || nBufferSize != 0)
 		{
 			currentState = true;
