@@ -45,6 +45,69 @@ LSTATUS ReadRegistry(HKEY hKeyParent, LPCWSTR spath, LPCWSTR subkey, DWORD* read
 
 	return (nResult);
 }
+class Coordinate
+{
+public:
+	int x;
+	int y;
+	Coordinate(int _x, int _y)
+	{
+		x = _x;
+		y = _y;
+	}
+};
+
+std::vector<DISPLAYCONFIG_PATH_INFO> ClonePathInfoArray;
+std::vector<DISPLAYCONFIG_MODE_INFO> CloneModeInfoArray;
+
+void DetachDisplay()
+{
+	UINT32 NumPathArrayElements = 0;
+	UINT32 NumModeInfoArrayElements = 0;
+	LONG error = GetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS, &NumPathArrayElements, &NumModeInfoArrayElements);
+	std::vector<DISPLAYCONFIG_PATH_INFO> PathInfoArray(NumPathArrayElements);
+	std::vector<DISPLAYCONFIG_MODE_INFO> ModeInfoArray(NumModeInfoArrayElements);
+	error = QueryDisplayConfig(QDC_ONLY_ACTIVE_PATHS, &NumPathArrayElements, &PathInfoArray[0], &NumModeInfoArrayElements, &ModeInfoArray[0], NULL);
+	ClonePathInfoArray = PathInfoArray;
+	CloneModeInfoArray = ModeInfoArray;
+	for (unsigned int i = 0; i < PathInfoArray.size(); ++i) {
+		if (PathInfoArray[i].sourceInfo.modeInfoIdx < ModeInfoArray.size()) {
+			int modeIndex = PathInfoArray[i].sourceInfo.modeInfoIdx;
+			_POINTL pos = ModeInfoArray[modeIndex].sourceMode.position;
+			if (pos.x != 0 || pos.y != 0) {
+
+				PathInfoArray[i].flags = 0;
+				break;
+			}
+
+
+		}
+	}
+	error = SetDisplayConfig(NumPathArrayElements, &PathInfoArray[0], NumModeInfoArrayElements, &ModeInfoArray[0], (SDC_APPLY | SDC_ALLOW_CHANGES | SDC_USE_SUPPLIED_DISPLAY_CONFIG));
+}
+
+bool DetectDisplay()
+{
+	UINT32 NumPathArrayElements = 0;
+	UINT32 NumModeInfoArrayElements = 0;
+	LONG error = GetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS, &NumPathArrayElements, &NumModeInfoArrayElements);
+	std::vector<DISPLAYCONFIG_PATH_INFO> PathInfoArray(NumPathArrayElements);
+	std::vector<DISPLAYCONFIG_MODE_INFO> ModeInfoArray(NumModeInfoArrayElements);
+	error = QueryDisplayConfig(QDC_ONLY_ACTIVE_PATHS, &NumPathArrayElements, &PathInfoArray[0], &NumModeInfoArrayElements, &ModeInfoArray[0], NULL);
+	if (PathInfoArray.size() > 1)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+void AttachDisplay()
+{
+	SetDisplayConfig(ClonePathInfoArray.size(), &ClonePathInfoArray[0], CloneModeInfoArray.size(), &CloneModeInfoArray[0], (SDC_APPLY | SDC_ALLOW_CHANGES | SDC_USE_SUPPLIED_DISPLAY_CONFIG));
+}
 
 int main()
 {
@@ -55,6 +118,7 @@ int main()
 	SHQueryUserNotificationState(ptr);
 	bool currentState = false;
 	bool lastState = false;
+
 	// TODO: code your application's behavior here.
 	while (true)
 	{
@@ -66,8 +130,12 @@ int main()
 
 		LSTATUS nResult = ReadRegistry(HKEY_CURRENT_USER, L"Software\\Valve\\Steam", L"RunningAppID", &nBufferSize);
 
+		auto hWnd = GetForegroundWindow();
+		RECT appBounds;
+		RECT rc;
+		GetWindowRect(GetDesktopWindow(), &rc);
 
-		if (result == QUNS_RUNNING_D3D_FULL_SCREEN || nBufferSize != 0)
+		if (nBufferSize != 0 || result == QUNS_RUNNING_D3D_FULL_SCREEN)
 		{
 			currentState = true;
 		}
@@ -76,18 +144,21 @@ int main()
 			currentState = false;
 		}
 
-		if (currentState != lastState)
+		if (currentState == lastState)
 		{
-			if (currentState == true)
+			if (currentState)
 			{
-				system("C:\\Windows\\System32\\DisplaySwitch.exe /internal");
+				// system("C:\\Windows\\System32\\DisplaySwitch.exe /internal");
+				std::cout << "Detach" << std::endl;
+				DetachDisplay();
 			}
 			else
 			{
-				system("C:\\Windows\\System32\\DisplaySwitch.exe /extend");
+				//system("C:\\Windows\\System32\\DisplaySwitch.exe /extend");
+				std::cout << "Attach" << std::endl;
+				AttachDisplay();
 			}
 		}
-
-		lastState = currentState;
+		lastState = DetectDisplay();
 	}
 }
