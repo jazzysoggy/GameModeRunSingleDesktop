@@ -130,11 +130,6 @@ int main()
 
 		LSTATUS nResult = ReadRegistry(HKEY_CURRENT_USER, L"Software\\Valve\\Steam", L"RunningAppID", &nBufferSize);
 
-		auto hWnd = GetForegroundWindow();
-		RECT appBounds;
-		RECT rc;
-		GetWindowRect(GetDesktopWindow(), &rc);
-
 		if (nBufferSize != 0 || result == QUNS_RUNNING_D3D_FULL_SCREEN)
 		{
 			currentState = true;
