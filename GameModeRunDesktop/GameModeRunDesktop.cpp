@@ -15,6 +15,22 @@
 #define new DEBUG_NEW
 #endif
 
+std::vector<char*> blacklist{};
+
+std::vector<const char*> whitelist{"RobloxPlayerBeta.exe"};
+
+bool isRunning(LPCSTR pName)
+{
+	HWND hwnd;
+	hwnd = FindWindowA(NULL, pName);
+	if (hwnd != 0) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
 LSTATUS ReadRegistry(HKEY hKeyParent, LPCWSTR spath, LPCWSTR subkey, DWORD* readData)
 {
 	HKEY hKey;
@@ -137,6 +153,17 @@ int main()
 		else
 		{
 			currentState = false;
+		}
+
+		if (currentState == false)
+		{
+			for (int i = 0; i < whitelist.size(); i++)
+			{
+				if (isRunning(whitelist[i]))
+				{
+					currentState = true;
+				}
+			}
 		}
 
 		if (currentState == lastState)
