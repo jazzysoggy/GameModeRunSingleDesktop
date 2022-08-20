@@ -17,7 +17,7 @@
 
 std::vector<char*> blacklist{};
 
-std::vector<const char*> whitelist{"RobloxPlayerBeta.exe"};
+std::vector<const char*> whitelist{"Roblox"};
 
 bool isRunning(LPCSTR pName)
 {
@@ -135,6 +135,9 @@ int main()
 	bool currentState = false;
 	bool lastState = false;
 
+	int currentSelection = 0;
+	int lastSelection = 1;
+
 	// TODO: code your application's behavior here.
 	while (true)
 	{
@@ -162,6 +165,7 @@ int main()
 				if (isRunning(whitelist[i]))
 				{
 					currentState = true;
+					break;
 				}
 			}
 		}
@@ -170,17 +174,24 @@ int main()
 		{
 			if (currentState)
 			{
-				// system("C:\\Windows\\System32\\DisplaySwitch.exe /internal");
-				std::cout << "Detach" << std::endl;
 				DetachDisplay();
 			}
 			else
 			{
-				//system("C:\\Windows\\System32\\DisplaySwitch.exe /extend");
-				std::cout << "Attach" << std::endl;
 				AttachDisplay();
 			}
 		}
 		lastState = DetectDisplay();
+
+		if (currentSelection != lastSelection)
+		{
+			std::cout << "[*] Enable/Disable" << std::endl;
+			std::cout << "[ ] Add Application To Whitelist" << std::endl;
+			std::cout << "[ ] Remove Application From Whitelist" << std::endl;
+			std::cout << "[ ] Quit" << std::endl;
+		}
+
+
+		lastSelection = currentSelection;
 	}
 }
