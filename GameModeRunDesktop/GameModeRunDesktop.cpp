@@ -125,6 +125,21 @@ void AttachDisplay()
 	SetDisplayConfig(ClonePathInfoArray.size(), &ClonePathInfoArray[0], CloneModeInfoArray.size(), &CloneModeInfoArray[0], (SDC_APPLY | SDC_ALLOW_CHANGES | SDC_USE_SUPPLIED_DISPLAY_CONFIG));
 }
 
+
+int numberOfOptions = 0;
+
+std::vector<const char*> mainMenu{ "[ ] Enable/Disable","[ ] Choose Monitor","[ ] Add Application To Whitelist","[ ] Remove Application From Whitelist","[ ] Quit" };
+std::vector<const char*> monitorMenu{ "Select Monitor" };
+std::vector<const char*> applicationMenu{ "Input Application Name" };
+std::vector<const char*> removeMenu{ "Select Application To Remove" };
+void Display()
+{
+
+	numberOfOptions = 5;
+}
+
+
+
 int main()
 {
 
@@ -185,10 +200,7 @@ int main()
 
 		if (currentSelection != lastSelection)
 		{
-			std::cout << "[*] Enable/Disable" << std::endl;
-			std::cout << "[ ] Add Application To Whitelist" << std::endl;
-			std::cout << "[ ] Remove Application From Whitelist" << std::endl;
-			std::cout << "[ ] Quit" << std::endl;
+
 		}
 
 
