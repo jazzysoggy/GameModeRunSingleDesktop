@@ -187,7 +187,7 @@ int main()
 
 		if (currentState == lastState)
 		{
-			if (currentState)
+			if (currentState && DetectDisplay())
 			{
 				DetachDisplay();
 			}
