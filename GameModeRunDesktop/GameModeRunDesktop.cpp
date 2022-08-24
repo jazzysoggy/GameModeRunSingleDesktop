@@ -10,14 +10,20 @@
 #include "iostream"
 #include "vector"
 #include "winreg.h"
+#include <fstream>
+#include <cstdint>
+#include <filesystem>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
+
 std::vector<char*> blacklist{};
 
 std::vector<const char*> whitelist{"Roblox"};
+
+namespace fs = std::filesystem;
 
 bool isRunning(LPCSTR pName)
 {
@@ -125,17 +131,51 @@ void AttachDisplay()
 	SetDisplayConfig(ClonePathInfoArray.size(), &ClonePathInfoArray[0], CloneModeInfoArray.size(), &CloneModeInfoArray[0], (SDC_APPLY | SDC_ALLOW_CHANGES | SDC_USE_SUPPLIED_DISPLAY_CONFIG));
 }
 
+int OutputMonitors()
+{
+	UINT32 NumPathArrayElements = 0;
+	UINT32 NumModeInfoArrayElements = 0;
+	LONG error = GetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS, &NumPathArrayElements, &NumModeInfoArrayElements);
+	std::vector<DISPLAYCONFIG_PATH_INFO> PathInfoArray(NumPathArrayElements);
+	std::vector<DISPLAYCONFIG_MODE_INFO> ModeInfoArray(NumModeInfoArrayElements);
+	error = QueryDisplayConfig(QDC_ONLY_ACTIVE_PATHS, &NumPathArrayElements, &PathInfoArray[0], &NumModeInfoArrayElements, &ModeInfoArray[0], NULL);
+	return PathInfoArray.size();
+}
 
+std::string selectedMenu;
 int numberOfOptions = 0;
+int selectedOption = 1;
 
-std::vector<const char*> mainMenu{ "[ ] Enable/Disable","[ ] Choose Monitor","[ ] Add Application To Whitelist","[ ] Remove Application From Whitelist","[ ] Quit" };
+std::vector<const char*> mainMenu{ "[*] Enable/Disable","[ ] Choose Monitor","[ ] Add Application To Whitelist","[ ] Remove Application From Whitelist","[ ] Quit" };
 std::vector<const char*> monitorMenu{ "Select Monitor" };
 std::vector<const char*> applicationMenu{ "Input Application Name" };
 std::vector<const char*> removeMenu{ "Select Application To Remove" };
-void Display()
+void Display(int index)
 {
+	switch (index) {
+	case 0:
+		for (int i = 1; i < mainMenu.size(); i++)
+		{
+			std::cout << mainMenu[i] << std::endl;
+		}
+		numberOfOptions = mainMenu.size();
+		selectedMenu = "main";
+		break;
+	case 2:
+		for (int i = 1; i < monitorMenu.size(); i++)
+		{
+			std::cout << monitorMenu[i] << std::endl;
+		}
 
-	numberOfOptions = 5;
+		numberOfOptions = OutputMonitors();
+		selectedMenu = "monitor";
+		break;
+	case 3:
+
+		break;
+	case 4:
+		break;
+	}
 }
 
 
@@ -152,6 +192,8 @@ int main()
 
 	int currentSelection = 0;
 	int lastSelection = 1;
+
+	std::filesystem::exists();
 
 	// TODO: code your application's behavior here.
 	while (true)
