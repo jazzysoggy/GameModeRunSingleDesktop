@@ -10,6 +10,7 @@
 #include "iostream"
 #include "vector"
 #include "winreg.h"
+#include <string>
 #include <fstream>
 #include <cstdint>
 #include <filesystem>
@@ -19,9 +20,9 @@
 #endif
 
 
-std::vector<char*> blacklist{};
+std::vector<std::string> blacklist{};
 
-std::vector<const char*> whitelist{"Roblox"};
+std::vector<std::string> whitelist{};
 
 namespace fs = std::filesystem;
 
@@ -193,7 +194,42 @@ int main()
 	int currentSelection = 0;
 	int lastSelection = 1;
 
-	std::filesystem::exists();
+	bool whiteExists = fs::exists("whitelist.txt");
+
+
+
+	if (whiteExists)
+	{
+		std::ifstream _whitelist("whitelist.txt");
+		if (_whitelist.is_open())
+		{
+			std::string dummy;
+			std::getline(_whitelist, dummy);
+
+			int count = 0;
+
+			whitelist.push_back("");
+
+			while (_whitelist >> whitelist[count])
+			{
+				count++;
+				whitelist.push_back("");
+			}
+			
+			whitelist.resize(whitelist.size() - 1);
+		}
+
+		_whitelist.close();
+	}
+	else
+	{
+		std::ofstream  _whitelist("whitelist.txt");
+		_whitelist << "Roblox" << std::endl;
+
+		whitelist.push_back("Roblox");
+		
+		_whitelist.close();
+	}
 
 	// TODO: code your application's behavior here.
 	while (true)
@@ -219,7 +255,7 @@ int main()
 		{
 			for (int i = 0; i < whitelist.size(); i++)
 			{
-				if (isRunning(whitelist[i]))
+				if (isRunning(whitelist[i].c_str()))
 				{
 					currentState = true;
 					break;
