@@ -14,6 +14,8 @@
 #include <fstream>
 #include <cstdint>
 #include <filesystem>
+#include <iostream>
+#include <fstream>  
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -196,39 +198,31 @@ int main()
 
 	bool whiteExists = fs::exists("whitelist.txt");
 
-
+	system("cd");
 
 	if (whiteExists)
 	{
-		std::ifstream _whitelist("whitelist.txt");
-		if (_whitelist.is_open())
+		std::ifstream infile("whitelist.txt");
+		if (infile.is_open())
 		{
-			std::string dummy;
-			std::getline(_whitelist, dummy);
 
-			int count = 0;
+			std::istream_iterator<std::string> start(infile), end;
 
-			whitelist.push_back("");
+			std::vector<std::string> temp(start, end);
 
-			while (_whitelist >> whitelist[count])
-			{
-				count++;
-				whitelist.push_back("");
-			}
-			
-			whitelist.resize(whitelist.size() - 1);
+			whitelist = temp;
 		}
 
-		_whitelist.close();
+		infile.close();
 	}
 	else
 	{
-		std::ofstream  _whitelist("whitelist.txt");
-		_whitelist << "Roblox" << std::endl;
+		std::ofstream  outfile("whitelist.txt");
+		outfile << "Roblox" << std::endl;
 
 		whitelist.push_back("Roblox");
 		
-		_whitelist.close();
+		outfile.close();
 	}
 
 	// TODO: code your application's behavior here.
