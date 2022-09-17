@@ -16,15 +16,13 @@
 #include <filesystem>
 #include <iostream>
 #include <fstream>  
+#include <thread>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
 
-std::vector<std::string> blacklist{};
-
-std::vector<std::string> whitelist{};
 
 namespace fs = std::filesystem;
 
@@ -149,7 +147,7 @@ std::string selectedMenu;
 int numberOfOptions = 0;
 int selectedOption = 1;
 
-std::vector<const char*> mainMenu{ "[*] Enable/Disable","[ ] Choose Monitor","[ ] Add Application To Whitelist","[ ] Remove Application From Whitelist","[ ] Quit" };
+std::vector<const char*> mainMenu{ "1. Enable/Disable","2. Choose Monitor","3. Add Application To Whitelist","4. Remove Application From Whitelist","5. Quit" };
 std::vector<const char*> monitorMenu{ "Select Monitor" };
 std::vector<const char*> applicationMenu{ "Input Application Name" };
 std::vector<const char*> removeMenu{ "Select Application To Remove" };
@@ -161,6 +159,7 @@ void Display(int index)
 		{
 			std::cout << mainMenu[i] << std::endl;
 		}
+		std::cout << std::endl << std::endl << std::endl << ">";
 		numberOfOptions = mainMenu.size();
 		selectedMenu = "main";
 		break;
@@ -187,16 +186,20 @@ int main()
 {
 
 
+	std::vector<std::string> blacklist{};
+
+	std::vector<std::string> whitelist{};
+
 	QUERY_USER_NOTIFICATION_STATE result;
 	QUERY_USER_NOTIFICATION_STATE* ptr = &result;
 	SHQueryUserNotificationState(ptr);
-	bool currentState = false;
-	bool lastState = false;
 
 	int currentSelection = 0;
 	int lastSelection = 1;
 
 	bool whiteExists = fs::exists("whitelist.txt");
+
+	bool blackExists = fs::exists("blacklist.txt");
 
 	system("cd");
 
@@ -225,53 +228,106 @@ int main()
 		outfile.close();
 	}
 
-	// TODO: code your application's behavior here.
-	while (true)
+	if (blackExists)
 	{
-		Sleep(1000);
-
-		const int BUFFER_SIZE = 1024;
-
-		DWORD nBufferSize;
-
-		LSTATUS nResult = ReadRegistry(HKEY_CURRENT_USER, L"Software\\Valve\\Steam", L"RunningAppID", &nBufferSize);
-
-		if (nBufferSize != 0 || result == QUNS_RUNNING_D3D_FULL_SCREEN)
+		std::ifstream infile("blacklist.txt");
+		if (infile.is_open())
 		{
-			currentState = true;
-		}
-		else
-		{
-			currentState = false;
+
+			std::istream_iterator<std::string> start(infile), end;
+
+			std::vector<std::string> temp(start, end);
+
+			blacklist = temp;
 		}
 
-		if (currentState == false)
+		infile.close();
+	}
+	else
+	{
+		std::ofstream  outfile("blacklist.txt");
+		outfile << "Lossless Scaling" << std::endl;
+
+		whitelist.push_back("Lossless Scaling");
+
+		outfile.close();
+	}
+
+
+	std::thread foo([result, blacklist, whitelist]() {
+
+		bool currentState = false;
+		bool lastState = false;
+
+		while (true)
 		{
-			for (int i = 0; i < whitelist.size(); i++)
+			Sleep(1000);
+
+			const int BUFFER_SIZE = 1024;
+
+			DWORD nBufferSize;
+
+			LSTATUS nResult = ReadRegistry(HKEY_CURRENT_USER, L"Software\\Valve\\Steam", L"RunningAppID", &nBufferSize);
+
+			if (nBufferSize != 0 || result == QUNS_RUNNING_D3D_FULL_SCREEN)
 			{
-				if (isRunning(whitelist[i].c_str()))
-				{
-					currentState = true;
-					break;
-				}
-			}
-		}
-
-		if (currentState == lastState)
-		{
-			if (currentState && DetectDisplay())
-			{
-				DetachDisplay();
+				currentState = true;
 			}
 			else
 			{
-				AttachDisplay();
+				currentState = false;
 			}
+
+			if (currentState == false)
+			{
+				for (int i = 0; i < whitelist.size(); i++)
+				{
+					if (isRunning(whitelist[i].c_str()))
+					{
+						currentState = true;
+						break;
+					}
+				}
+			}
+			else
+			{
+				for (int i = 0; i < blacklist.size(); i++)
+				{
+					if (isRunning(blacklist[i].c_str()))
+					{
+						currentState = false;
+						break;
+					}
+				}
+			}
+
+			if (currentState == lastState)
+			{
+				if (currentState && DetectDisplay())
+				{
+					DetachDisplay();
+				}
+				else
+				{
+					AttachDisplay();
+				}
+			}
+			lastState = DetectDisplay();
 		}
-		lastState = DetectDisplay();
+		});
+
+	Display(0);
+	// TODO: code your application's behavior here.
+	while (true)
+	{
+		std::string input;
+
+		std::cin >> input;
 
 		if (currentSelection != lastSelection)
 		{
+			std::cout << std::flush;
+
 
 		}
 
