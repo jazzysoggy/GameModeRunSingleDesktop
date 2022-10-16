@@ -17,6 +17,7 @@
 #include <iostream>
 #include <fstream>  
 #include <thread>
+#include <conio.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -143,11 +144,36 @@ int OutputMonitors()
 	return PathInfoArray.size();
 }
 
+void PrintMonitors()
+{
+	UINT32 NumPathArrayElements = 0;
+	UINT32 NumModeInfoArrayElements = 0;
+	LONG error = GetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS, &NumPathArrayElements, &NumModeInfoArrayElements);
+	std::vector<DISPLAYCONFIG_PATH_INFO> PathInfoArray(NumPathArrayElements);
+	std::vector<DISPLAYCONFIG_MODE_INFO> ModeInfoArray(NumModeInfoArrayElements);
+	error = QueryDisplayConfig(QDC_ONLY_ACTIVE_PATHS, &NumPathArrayElements, &PathInfoArray[0], &NumModeInfoArrayElements, &ModeInfoArray[0], NULL);
+	for (int i = 0; i < PathInfoArray.size(); i++)
+	{
+		DISPLAYCONFIG_TARGET_DEVICE_NAME targetName = {};
+		targetName.header.adapterId = PathInfoArray[i].targetInfo.adapterId;
+		targetName.header.id = PathInfoArray[i].targetInfo.id;
+		targetName.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME;
+		targetName.header.size = sizeof(targetName);
+		LONG isError = DisplayConfigGetDeviceInfo(&targetName.header);
+
+
+		std::wstring mon_name = targetName.monitorFriendlyDeviceName;
+		std::wcout << i << ". " << mon_name << std::endl;
+
+	}
+}
+
 std::string selectedMenu;
 int numberOfOptions = 0;
 int selectedOption = 1;
+bool enabled = true;
 
-std::vector<const char*> mainMenu{ "1. Enable/Disable","2. Choose Monitor","3. Add Application To Whitelist","4. Remove Application From Whitelist","5. Quit" };
+std::vector<const char*> mainMenu{ "1. Disable","2. Choose Monitor","3. Add Application To Whitelist","4. Remove Application From Whitelist","5. Quit" };
 std::vector<const char*> monitorMenu{ "Select Monitor" };
 std::vector<const char*> applicationMenu{ "Input Application Name" };
 std::vector<const char*> removeMenu{ "Select Application To Remove" };
@@ -155,7 +181,12 @@ void Display(int index)
 {
 	switch (index) {
 	case 0:
-		for (int i = 1; i < mainMenu.size(); i++)
+		if (!enabled)
+			mainMenu[0] = "1. Enable";
+
+		else
+			mainMenu[0] = "1. Disable";
+		for (int i = 0; i < mainMenu.size(); i++)
 		{
 			std::cout << mainMenu[i] << std::endl;
 		}
@@ -166,11 +197,14 @@ void Display(int index)
 	case 2:
 		for (int i = 1; i < monitorMenu.size(); i++)
 		{
-			std::cout << monitorMenu[i] << std::endl;
+			std::cout << monitorMenu[i] << std::endl << std::endl;
 		}
 
 		numberOfOptions = OutputMonitors();
+		PrintMonitors();
 		selectedMenu = "monitor";
+
+		std::cout << ++numberOfOptions << ". " << "Return to Main Menu";
 		break;
 	case 3:
 
@@ -201,8 +235,6 @@ int main()
 
 	bool blackExists = fs::exists("blacklist.txt");
 
-	system("cd");
-
 	if (whiteExists)
 	{
 		std::ifstream infile("whitelist.txt");
@@ -224,7 +256,7 @@ int main()
 		outfile << "Roblox" << std::endl;
 
 		whitelist.push_back("Roblox");
-		
+
 		outfile.close();
 	}
 
@@ -262,6 +294,11 @@ int main()
 		while (true)
 		{
 			Sleep(1000);
+
+			if (!enabled)
+			{
+				continue;
+			}
 
 			const int BUFFER_SIZE = 1024;
 
@@ -320,14 +357,28 @@ int main()
 	// TODO: code your application's behavior here.
 	while (true)
 	{
-		std::string input;
+		int input;
 
 		std::cin >> input;
 
-		if (currentSelection != lastSelection)
-		{
-			std::cout << std::flush;
+		system("cls");
 
+		switch (input) {
+			case 1:
+				enabled = !enabled;
+				if (!enabled)
+				{
+					AttachDisplay();
+				}
+				Display(0);
+
+			case 2:
+				Display(1);
+//			case 3:
+
+//			case 4:
+
+//			case 5:
 
 		}
 
