@@ -17,6 +17,7 @@
 #include <iostream>
 #include <fstream>  
 #include <thread>
+#include <unordered_map>
 #include <conio.h>
 
 #ifdef _DEBUG
@@ -207,7 +208,6 @@ void Display(int index)
 		std::cout << ++numberOfOptions << ". " << "Return to Main Menu";
 		break;
 	case 3:
-
 		break;
 	case 4:
 		break;
@@ -245,7 +245,7 @@ int main()
 
 			std::vector<std::string> temp(start, end);
 
-			whitelist = temp;
+			whitelist = std::move(temp);
 		}
 
 		infile.close();
@@ -270,7 +270,7 @@ int main()
 
 			std::vector<std::string> temp(start, end);
 
-			blacklist = temp;
+			blacklist = std::move(temp);
 		}
 
 		infile.close();
@@ -355,6 +355,7 @@ int main()
 
 	Display(0);
 	// TODO: code your application's behavior here.
+	int display = 0;
 	while (true)
 	{
 		int input;
@@ -365,15 +366,22 @@ int main()
 
 		switch (input) {
 			case 1:
-				enabled = !enabled;
-				if (!enabled)
+				if(display == 0)
 				{
-					AttachDisplay();
+					enabled = !enabled;
+					if (!enabled)
+					{
+						AttachDisplay();
+					}
+					Display(0);
 				}
-				Display(0);
-
 			case 2:
-				Display(1);
+				if(display == 0)
+				{
+					Display(1);
+					display = 1;
+				}
+
 //			case 3:
 
 //			case 4:
